@@ -2,7 +2,8 @@
 
 # dependencies
 node_modules/
-
+.local.config.ts
+local.config.ts
 # Expo
 .expo/
 dist/
@@ -41,3 +42,4 @@ app-example
 # generated native folders
 /ios
 /android
+local.config.ts
