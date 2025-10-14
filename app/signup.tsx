@@ -1,6 +1,7 @@
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { appIcon } from '@/constant';
+import { signUpUser } from '@/firebase/authService';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -11,6 +12,19 @@ const SignUp = () => {
     const [password, setPassword] = useState<string | null>("");
     const [firstName, setFirstName] = useState<string | null>("");
     const [lastName, setLastName] = useState<string | null>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const onSubmit = async () => {
+        if (!email || !password || !firstName || !lastName) return;
+        setIsLoading(true);
+        try {
+            await signUpUser(email, password, firstName, lastName, '/');
+            router.replace('/(tabs)');
+        } catch (error) {
+            error instanceof Error ? console.log(error.message) : console.log(error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
     const onRoute = () => {
         router.replace('/signin');
     };
@@ -40,7 +54,7 @@ const SignUp = () => {
                     text={password}
                     onChangeText={setPassword}
                 />
-                <Button text={'Sign Up'} />
+                <Button text={'Sign Up'} onPress={onSubmit} isLoading={isLoading} />
                 <View style={styles.containerFooter}>
                     <TouchableOpacity onPress={onRoute}>
                         <Text>{"You have an account? sign in"}</Text>
