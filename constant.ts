@@ -44,3 +44,42 @@ export const chats = [
 
     },
 ];
+
+export const messages = [
+    {
+        message: 'Hello John',
+        role: 'me',
+        time: '09:00 AM',
+        image: require('./assets/pictures/photo1.jpg'),
+    },
+    {
+        message: 'Hey! How are you Jack?',
+        role: 'sender',
+        time: '09:02 AM',
+        image: require('./assets/pictures/photo2.jpg'),
+    },
+    {
+        message: 'I am good, thanks! What about you?',
+        role: 'me',
+        time: '09:05 AM',
+        image: require('./assets/pictures/photo3.jpg'),
+    },
+    {
+        message: 'Doing great! Want to catch up later?',
+        role: 'sender',
+        time: '09:07 AM',
+        image: require('./assets/pictures/photo4.jpg'),
+    },
+    {
+        message: 'Sure, let’s meet at 5 PM.',
+        role: 'me',
+        time: '09:10 AM',
+        image: require('./assets/pictures/photo5.jpg'),
+    },
+    {
+        message: 'Perfect, see you then!',
+        role: 'sender',
+        time: '09:12 AM',
+        image: require('./assets/pictures/photo6.jpg'),
+    },
+];
