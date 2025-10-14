@@ -2,7 +2,7 @@ import { InputProps } from '@/global';
 import React, { useState } from 'react';
 import { Animated, StyleSheet, TextInput, View } from 'react-native';
 const Input: React.FC<InputProps> = ({ placeholder, text, onChangeText, secureTextEntry }) => {
-    const [isFocused, setIsFocused] = useState(false);
+    const [isFocused, setIsFocused] = useState<boolean>(false);
     const labelPosition = useState(new Animated.Value(text ? 1 : 0))[0];
     const handleFocus = () => {
         setIsFocused(true);
