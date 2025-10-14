@@ -1,7 +1,7 @@
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { appIcon } from '@/constant';
-import { signUpUser } from '@/firebase/authService';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -13,11 +13,12 @@ const SignUp = () => {
     const [firstName, setFirstName] = useState<string | null>("");
     const [lastName, setLastName] = useState<string | null>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const { signUp } = useAuth();
     const onSubmit = async () => {
         if (!email || !password || !firstName || !lastName) return;
         setIsLoading(true);
         try {
-            await signUpUser(email, password, firstName, lastName, '/');
+            await signUp(email, password, firstName, lastName, '/');
             router.replace('/(tabs)');
         } catch (error) {
             error instanceof Error ? console.log(error.message) : console.log(error);
@@ -53,6 +54,7 @@ const SignUp = () => {
                     placeholder="Password"
                     text={password}
                     onChangeText={setPassword}
+                    secureTextEntry={true}
                 />
                 <Button text={'Sign Up'} onPress={onSubmit} isLoading={isLoading} />
                 <View style={styles.containerFooter}>

@@ -1,7 +1,7 @@
 import { InputProps } from '@/global';
 import React, { useState } from 'react';
 import { Animated, StyleSheet, TextInput, View } from 'react-native';
-const Input: React.FC<InputProps> = ({ placeholder, text, onChangeText }) => {
+const Input: React.FC<InputProps> = ({ placeholder, text, onChangeText, secureTextEntry }) => {
     const [isFocused, setIsFocused] = useState(false);
     const labelPosition = useState(new Animated.Value(text ? 1 : 0))[0];
     const handleFocus = () => {
@@ -52,6 +52,7 @@ const Input: React.FC<InputProps> = ({ placeholder, text, onChangeText }) => {
                     styles.input,
                     { borderColor: isFocused ? 'coral' : '#ccc' },
                 ]}
+                secureTextEntry={secureTextEntry}
             />
         </View>
     );
