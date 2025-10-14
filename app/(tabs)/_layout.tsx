@@ -25,8 +25,7 @@ const TabsLayout = () => {
                     },
                 })}
             >
-                <Tabs.Screen name="index" options={{ title: 'Chats' }}
-                />
+                <Tabs.Screen name="index" options={{ title: 'Chats' }} />
                 <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
             </Tabs>
         </SafeAreaView>
