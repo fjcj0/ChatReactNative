@@ -2,32 +2,26 @@ import { appIcon, colors, startIcon } from "@/constant";
 import { useRouter } from "expo-router";
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 const { width, height } = Dimensions.get('window');
-
 export default function Index() {
   const router = useRouter();
   const onStartApp = () => {
     router.replace('/signin');
   };
-
   return (
     <SafeAreaView style={styles.containerStart}>
       <View style={styles.containerHeader}>
         <Image source={appIcon} style={styles.imageHeaderStyle} />
       </View>
-
       <View style={styles.containerBody}>
         <View style={styles.containerImage}>
           <Image source={startIcon} style={styles.imageStyle} />
         </View>
-
         <View style={styles.containerText}>
           <Text style={styles.textStyle}>
             Stay Connected With Your Friends And Your Family
           </Text>
         </View>
-
         <TouchableOpacity style={styles.buttonStyle} onPress={onStartApp}>
           <Text style={styles.textButton}>Get Started</Text>
         </TouchableOpacity>
@@ -35,7 +29,6 @@ export default function Index() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   containerStart: {
     flex: 1,
