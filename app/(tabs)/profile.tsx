@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 const Profile = () => {
-    const { user, updateDisplayName, updateProfilePicture } = useAuth();
+    const { user, updateDisplayName, updateProfilePicture, signOut } = useAuth();
     const [newFirstName, setNewFirstName] = useState('');
     const [newLastName, setNewLastName] = useState('');
     const [newProfile, setNewProfile] = useState<string | null>(null);
@@ -55,6 +55,9 @@ const Profile = () => {
             setIsLoading(false);
         }
     };
+    const handleLogout = async () => {
+        await signOut();
+    };
     return (
         <View style={styles.container}>
             <View style={styles.profileContainer}>
@@ -66,7 +69,6 @@ const Profile = () => {
                     <MaterialCommunityIcons name="image-edit" color="white" size={22} />
                 </TouchableOpacity>
             </View>
-
             <View style={styles.containerInformation}>
                 <Input
                     placeholder={user?.firstName || 'New First Name'}
@@ -80,7 +82,14 @@ const Profile = () => {
                     secureTextEntry={false}
                     onChangeText={setNewLastName}
                 />
-                <Button text="Edit" onPress={onEditData} isLoading={isLoading} />
+                <View style={styles.containerButton}>
+                    <Button text="Edit" onPress={onEditData} isLoading={isLoading} />
+                    <Button
+                        text="Logout"
+                        onPress={handleLogout}
+                        isLoading={false}
+                    />
+                </View>
             </View>
         </View>
     );
@@ -117,4 +126,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    containerButton: {
+        flexDirection: 'row',
+        columnGap: 5,
+    }
 });

@@ -1,4 +1,5 @@
 import { auth, database } from "@/config/firebase";
+import { useRouter } from "expo-router";
 import {
     createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
@@ -31,6 +32,7 @@ type AuthContextType = {
 };
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const router = useRouter();
     const [user, setUser] = useState<UserType>(null);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
@@ -103,8 +105,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
     const signOut = async () => {
-        await firebaseSignOut(auth);
-        setUser(null);
+        setLoading(true);
+        try {
+            await firebaseSignOut(auth);
+            setUser(null);
+        } catch (error: any) {
+            console.log(error.message);
+        } finally {
+            setLoading(false);
+        }
     };
     const updateProfilePicture = async (newProfileUrl: string) => {
         if (!user) return;

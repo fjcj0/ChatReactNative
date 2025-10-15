@@ -18,7 +18,7 @@ const SignUp = () => {
         if (!email || !password || !firstName || !lastName) return;
         setIsLoading(true);
         try {
-            await signUp(email, password, firstName, lastName, '/');
+            await signUp(email, password, firstName, lastName, 'https://res.cloudinary.com/djovbiyia/image/upload/v1759851531/users/zdttgtte038xkndmqkzz.webp');
             router.replace('/(tabs)');
         } catch (error) {
             error instanceof Error ? console.log(error.message) : console.log(error);

@@ -1,20 +1,29 @@
-import { chats, colors } from '@/constant';
+import { colors } from '@/constant';
+import { useChats } from '@/context/ChatsContext';
 import React, { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 const Chats = () => {
     const [searchText, setSearchText] = useState<string>('');
     const [isFocused, setIsFocused] = useState<boolean>(false);
     const inputRef = useRef<TextInput>(null);
-    const onChangeText = (text: string) => {
-        setSearchText(text);
-    };
+    const { users, loading } = useChats();
     useEffect(() => {
         inputRef.current?.focus();
         setIsFocused(true);
     }, []);
-    const filteredChats = chats.filter(chat =>
-        chat.name.toLowerCase().includes(searchText.toLowerCase())
+    const onChangeText = (text: string) => {
+        setSearchText(text);
+    };
+    const filteredUsers = users.filter(user =>
+        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchText.toLowerCase())
     );
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text>Loading users...</Text>
+            </View>
+        );
+    }
     return (
         <View style={styles.container}>
             <View style={styles.containerSearch}>
@@ -32,21 +41,21 @@ const Chats = () => {
                 />
             </View>
             <ScrollView style={styles.chatList} contentContainerStyle={styles.chatContent}>
-                {filteredChats.length > 0 ? (
-                    filteredChats.map((chat, index) => (
-                        <TouchableOpacity key={index} style={styles.viewChatStyle}>
-                            <Image source={chat.photo} style={styles.imageStyle} />
+                {filteredUsers.length > 0 ? (
+                    filteredUsers.map((user) => (
+                        <TouchableOpacity key={user.uid} style={styles.viewChatStyle}>
+                            <Image source={{ uri: user.profilePicture }} style={styles.imageStyle} />
                             <View>
-                                <Text style={styles.textChat}>{chat.name}</Text>
+                                <Text style={styles.textChat}>{`${user.firstName} ${user.lastName}`}</Text>
                                 <Text style={{ marginTop: 4, color: 'gray' }}>
-                                    Joined At: {chat.joinedAt}
+                                    Joined At: {new Date(user.createdAt).toLocaleDateString()}
                                 </Text>
                             </View>
                         </TouchableOpacity>
                     ))
                 ) : (
                     <Text style={{ textAlign: 'center', color: 'gray', marginTop: 20 }}>
-                        No chats found
+                        No users found
                     </Text>
                 )}
             </ScrollView>
