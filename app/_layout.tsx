@@ -7,7 +7,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace("/(chat)");
+        router.replace("/(tabs)");
       }
     }
   }, [user]);

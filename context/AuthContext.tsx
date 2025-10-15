@@ -8,6 +8,11 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
+const getPublicIdFromUrl = (url: string, location: string) => {
+    const parts = url.split('/');
+    const filename = parts[parts.length - 1];
+    return `${location}/${filename.split('.')[0]}`;
+};
 type UserType = {
     uid: string;
     email: string | null;
@@ -21,6 +26,8 @@ type AuthContextType = {
     signUp: (email: string, password: string, firstName: string, lastName: string, profilePicture: string) => Promise<string | null>;
     signIn: (email: string, password: string) => Promise<string | null>;
     signOut: () => Promise<void>;
+    updateProfilePicture: (newProfileUrl: string) => Promise<void>;
+    updateDisplayName: (firstName: string, lastName: string) => Promise<void>;
 };
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -65,16 +72,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 profilePicture,
                 createdAt: new Date().toISOString(),
             });
-            setUser({
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                firstName,
-                lastName,
-                profilePicture,
-            });
+            setUser({ uid: firebaseUser.uid, email: firebaseUser.email, firstName, lastName, profilePicture });
             return firebaseUser.uid;
         } catch (error: any) {
-            console.error("Error signing up:", error.message);
+            console.log("Error signing up:", error.message);
             return null;
         }
     };
@@ -97,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             return firebaseUser.uid;
         } catch (error: any) {
-            console.error("Error signing in:", error.message);
+            console.log("Error signing in:", error.message);
             return null;
         }
     };
@@ -105,8 +106,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await firebaseSignOut(auth);
         setUser(null);
     };
+    const updateProfilePicture = async (newProfileUrl: string) => {
+        if (!user) return;
+        try {
+            await updateProfile(auth.currentUser!, { photoURL: newProfileUrl });
+            const userRef = doc(database, "users", user.uid);
+            await setDoc(userRef, { profilePicture: newProfileUrl, updatedAt: new Date().toISOString() }, { merge: true });
+            setUser(prev => prev ? { ...prev, profilePicture: newProfileUrl } : prev);
+            console.log("Profile picture updated successfully!");
+        } catch (error: any) {
+            console.log("Error updating profile picture:", error.message);
+            throw new Error(error.message);
+        }
+    };
+    const updateDisplayName = async (firstName: string, lastName: string) => {
+        if (!auth.currentUser || !user) return;
+        try {
+            const displayName = `${firstName} ${lastName}`;
+            await updateProfile(auth.currentUser, { displayName });
+            const userRef = doc(database, "users", user.uid);
+            await setDoc(userRef, { firstName, lastName, updatedAt: new Date().toISOString() }, { merge: true });
+            setUser(prev => prev ? { ...prev, firstName, lastName } : prev);
+            console.log("Display name updated successfully!");
+        } catch (error: any) {
+            console.log("Error updating display name:", error.message);
+        }
+    };
     return (
-        <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
+        <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, updateProfilePicture, updateDisplayName }}>
             {children}
         </AuthContext.Provider>
     );
