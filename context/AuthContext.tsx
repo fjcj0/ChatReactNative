@@ -118,22 +118,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const formData = new FormData();
             formData.append("file", {
                 uri,
-                type: "image/jpeg", // or dynamically detect type
+                type: "image/jpeg",
                 name: uri.split("/").pop(),
             } as any);
             formData.append("upload_preset", PUBLIC_EXPO_CLOUDINARY_UPLOAD_PRESET);
-
             const response = await axios.post(PUBLIC_EXPO_URL_CLOUDAINRY, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-
-            return response.data.secure_url; // Cloudinary URL
+            return response.data.secure_url;
         } catch (error: any) {
             console.error("Cloudinary upload error:", error.response?.data || error.message);
             throw new Error("Failed to upload image to Cloudinary");
         }
     };
-
     const updateProfilePicture = async (newProfileUri: string) => {
         if (!user) return;
         try {
