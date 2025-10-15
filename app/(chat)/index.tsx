@@ -108,7 +108,7 @@ const Chat = () => {
         setIsSending(true);
         try {
             let uploadedUrl: string | null = null;
-            let mediaType: 'image' | 'video' | undefined = undefined;
+            let mediaType: 'image' | 'video' | null = null;
             if (media) {
                 uploadedUrl = await uploadToCloudinary(media.uri);
                 mediaType = media.type;
@@ -117,7 +117,7 @@ const Chat = () => {
                 senderId: currentUser?.uid,
                 text: message || '',
                 mediaUrl: uploadedUrl || null,
-                mediaType,
+                mediaType: media ? mediaType : null,
                 createdAt: serverTimestamp(),
             });
             setMessage('');
