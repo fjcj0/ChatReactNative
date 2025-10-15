@@ -1,4 +1,6 @@
 import { auth, database } from "@/config/firebase";
+import { PUBLIC_EXPO_CLOUDINARY_UPLOAD_PRESET, PUBLIC_EXPO_URL_CLOUDAINRY } from "@/local.config";
+import axios from "axios";
 import { useRouter } from "expo-router";
 import {
     createUserWithEmailAndPassword,
@@ -9,11 +11,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
-const getPublicIdFromUrl = (url: string, location: string) => {
-    const parts = url.split('/');
-    const filename = parts[parts.length - 1];
-    return `${location}/${filename.split('.')[0]}`;
-};
+
 type UserType = {
     uid: string;
     email: string | null;
@@ -115,13 +113,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setLoading(false);
         }
     };
-    const updateProfilePicture = async (newProfileUrl: string) => {
+    const uploadToCloudinary = async (uri: string) => {
+        try {
+            const formData = new FormData();
+            formData.append("file", {
+                uri,
+                type: "image/jpeg", // or dynamically detect type
+                name: uri.split("/").pop(),
+            } as any);
+            formData.append("upload_preset", PUBLIC_EXPO_CLOUDINARY_UPLOAD_PRESET);
+
+            const response = await axios.post(PUBLIC_EXPO_URL_CLOUDAINRY, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            return response.data.secure_url; // Cloudinary URL
+        } catch (error: any) {
+            console.error("Cloudinary upload error:", error.response?.data || error.message);
+            throw new Error("Failed to upload image to Cloudinary");
+        }
+    };
+
+    const updateProfilePicture = async (newProfileUri: string) => {
         if (!user) return;
         try {
-            await updateProfile(auth.currentUser!, { photoURL: newProfileUrl });
+            const cloudinaryUrl = await uploadToCloudinary(newProfileUri);
+            await updateProfile(auth.currentUser!, { photoURL: cloudinaryUrl });
             const userRef = doc(database, "users", user.uid);
-            await setDoc(userRef, { profilePicture: newProfileUrl, updatedAt: new Date().toISOString() }, { merge: true });
-            setUser(prev => prev ? { ...prev, profilePicture: newProfileUrl } : prev);
+            await setDoc(
+                userRef,
+                { profilePicture: cloudinaryUrl, updatedAt: new Date().toISOString() },
+                { merge: true }
+            );
+            setUser(prev => (prev ? { ...prev, profilePicture: cloudinaryUrl } : prev));
             console.log("Profile picture updated successfully!");
         } catch (error: any) {
             console.log("Error updating profile picture:", error.message);

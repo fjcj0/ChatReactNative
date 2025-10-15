@@ -24,16 +24,16 @@ const Profile = () => {
             aspect: [1, 1],
             quality: 0.7,
         });
-        if (!result.canceled) {
-            const uri = result.assets[0].uri;
+        if (!result.canceled && result.assets.length > 0) {
+            const uri = result.assets[0].uri.startsWith("file://") ? result.assets[0].uri : "file://" + result.assets[0].uri;
             setNewProfile(uri);
             setIsLoading(true);
             try {
                 await updateProfilePicture(uri);
-                Alert.alert('Success', 'Profile picture updated!');
+                Alert.alert("Success", "Profile picture updated!");
             } catch (error) {
-                console.error('Error uploading image:', error);
-                Alert.alert('Error', 'Failed to update profile picture.');
+                console.error(error);
+                Alert.alert("Error", "Failed to update profile picture.");
             } finally {
                 setIsLoading(false);
             }
