@@ -4,17 +4,20 @@ import { appIcon } from '@/constant';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 const SignIn = () => {
     const router = useRouter();
     const [email, setEmail] = useState<string | null>("");
     const [password, setPassword] = useState<string | null>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { signIn } = useAuth();
+
     const onRoute = () => {
         router.replace('/signup');
     };
+
     const onSubmit = async () => {
         if (!email || !password) return;
         setIsLoading(true);
@@ -27,33 +30,41 @@ const SignIn = () => {
             setIsLoading(false);
         }
     };
+
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.containerImage}>
-                <Image source={appIcon} style={styles.imageStyle} />
-            </View>
-            <View style={styles.containerForm}>
-                <Input
-                    placeholder="Email"
-                    text={email}
-                    onChangeText={setEmail}
-                />
-                <Input
-                    placeholder="Password"
-                    text={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={true}
-                />
-                <Button text={'Sign In'} onPress={onSubmit} isLoading={isLoading} />
-                <View style={styles.containerFooter}>
-                    <TouchableOpacity onPress={onRoute}>
-                        <Text>{"You don't have an account? sign up"}</Text>
-                    </TouchableOpacity>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 5 : 0}
+        >
+            <SafeAreaView style={styles.container}>
+                <View style={styles.containerImage}>
+                    <Image source={appIcon} style={styles.imageStyle} />
                 </View>
-            </View>
-        </SafeAreaView>
+                <View style={styles.containerForm}>
+                    <Input
+                        placeholder="Email"
+                        text={email}
+                        onChangeText={setEmail}
+                    />
+                    <Input
+                        placeholder="Password"
+                        text={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={true}
+                    />
+                    <Button text={'Sign In'} onPress={onSubmit} isLoading={isLoading} />
+                    <View style={styles.containerFooter}>
+                        <TouchableOpacity onPress={onRoute}>
+                            <Text>{"You don't have an account? Sign up"}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </SafeAreaView>
+        </KeyboardAvoidingView>
     );
 };
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -85,4 +96,5 @@ const styles = StyleSheet.create({
         marginTop: 7,
     },
 });
+
 export default SignIn;

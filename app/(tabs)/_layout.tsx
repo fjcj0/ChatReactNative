@@ -9,15 +9,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export const AuthChecker: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, loading } = useAuth();
     const router = useRouter();
-
     useEffect(() => {
         if (!loading && !user) {
-            router.replace("/"); // redirect unauthenticated users immediately
+            router.replace("/");
         }
     }, [user, loading]);
 
-    if (loading) return null; // prevent flicker
-
+    if (loading) return null;
     return <>{children}</>;
 };
 const TabsLayout = () => {
@@ -46,10 +44,7 @@ const TabsLayout = () => {
         </ChatsProvider>
     );
 };
-
-
 export default TabsLayout;
-
 const styles = StyleSheet.create({
     barContainer: {
         width: '90%',

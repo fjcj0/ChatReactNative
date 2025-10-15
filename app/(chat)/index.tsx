@@ -1,16 +1,73 @@
 import Input from '@/components/Input';
-import { colors, messages } from '@/constant';
+import { database } from '@/config/firebase';
+import { colors } from '@/constant';
 import { useAuth } from '@/context/AuthContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+    addDoc,
+    collection,
+    onSnapshot,
+    orderBy,
+    query,
+    serverTimestamp,
+} from 'firebase/firestore';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type MessageType = {
+    id: string;
+    senderId: string;
+    text?: string;
+    mediaUrl?: string;
+    createdAt?: any;
+};
+
 const Chat = () => {
-    const { user } = useAuth();
+    const { user: currentUser } = useAuth();
+    const params = useLocalSearchParams();
+    const router = useRouter();
+    const scrollRef = useRef<ScrollView>(null);
+    const otherUserId = params.uid as string;
+    const otherUserName = params.name as string;
+    const otherUserProfile = params.profilePicture as string;
     const [message, setMessage] = useState<string>('');
     const [media, setMedia] = useState<{ uri: string; type: 'image' | 'video' } | null>(null);
+    const [messages, setMessages] = useState<MessageType[]>([]);
+
+    const chatId =
+        currentUser && otherUserId
+            ? [currentUser.uid, otherUserId].sort().join('_')
+            : null;
+
+    useEffect(() => {
+        if (!chatId) return;
+        const q = query(
+            collection(database, 'chats', chatId, 'messages'),
+            orderBy('createdAt', 'asc')
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            })) as MessageType[];
+            setMessages(msgs);
+            scrollRef.current?.scrollToEnd({ animated: true });
+        });
+
+        return () => unsubscribe();
+    }, [chatId]);
 
     const pickMedia = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -28,102 +85,121 @@ const Chat = () => {
 
     const removeMedia = () => setMedia(null);
 
-    const sendMessage = () => {
-        console.log('Message:', message);
-        console.log('Media:', media);
-        setMessage('');
-        setMedia(null);
+    const sendMessage = async () => {
+        if (!chatId || (!message && !media)) return;
+
+        try {
+            await addDoc(collection(database, 'chats', chatId, 'messages'), {
+                senderId: currentUser?.uid,
+                text: message || '',
+                mediaUrl: media?.uri || null,
+                createdAt: serverTimestamp(),
+            });
+            setMessage('');
+            setMedia(null);
+        } catch (err) {
+            console.error('Error sending message:', err);
+        }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.containerHeader}>
-                <TouchableOpacity
-                    style={styles.buttonHeaderStyle}
-                    onPress={() => console.log('Back pressed')}>
-                    <MaterialCommunityIcons name='arrow-left' size={20} color="#fff" />
-                </TouchableOpacity>
-                {user?.profilePicture && (
-                    <Image
-                        source={{ uri: user.profilePicture }}
-                        style={{ width: 60, height: 60, borderRadius: 50 }}
-                    />
-                )}
-            </View>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 5 : 0}
+        >
+            <SafeAreaView style={styles.container}>
+                {/* Header */}
+                <View style={styles.containerHeader}>
+                    <TouchableOpacity
+                        style={styles.buttonHeaderStyle}
+                        onPress={() => router.back()}
+                    >
+                        <MaterialCommunityIcons name='arrow-left' size={20} color="#fff" />
+                    </TouchableOpacity>
+                    {otherUserProfile && (
+                        <Image
+                            source={{ uri: otherUserProfile }}
+                            style={{ width: 60, height: 60, borderRadius: 50 }}
+                        />
+                    )}
+                    <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{otherUserName}</Text>
+                </View>
 
-            <ScrollView
-                style={{ flex: 1, width: '100%' }}
-                contentContainerStyle={{ paddingVertical: 10 }}
-                showsVerticalScrollIndicator={false}
-            >
-                {messages.map((msg, index) => {
-                    const isMe = msg.role === 'me';
-                    return (
-                        <View
-                            key={index}
-                            style={[
-                                styles.messageContainer,
-                                isMe ? styles.messageRight : styles.messageLeft,
-                            ]}
-                        >
-                            {!isMe && msg.image && (
-                                <Image
-                                    source={msg.image}
-                                    style={styles.senderProfileImage}
-                                />
-                            )}
+                {/* Messages */}
+                <ScrollView
+                    style={{ flex: 1, width: '100%' }}
+                    contentContainerStyle={{ paddingVertical: 10 }}
+                    ref={scrollRef}
+                >
+                    {messages.map((msg) => {
+                        const isMe = msg.senderId === currentUser?.uid;
+                        return (
                             <View
+                                key={msg.id}
                                 style={[
-                                    styles.messageBubble,
-                                    isMe ? styles.bubbleMe : styles.bubbleSender,
+                                    styles.messageContainer,
+                                    isMe ? styles.messageRight : styles.messageLeft,
                                 ]}
                             >
-                                {msg.message && (
-                                    <Text style={isMe ? styles.textMe : styles.textSender}>
-                                        {msg.message}
-                                    </Text>
-                                )}
-                                {msg.image && (
+                                {!isMe && otherUserProfile && (
                                     <Image
-                                        source={msg.image}
-                                        style={styles.messageImage}
+                                        source={{ uri: otherUserProfile }}
+                                        style={styles.senderProfileImage}
                                     />
                                 )}
-                                {msg.time && (
-                                    <Text style={styles.timeText}>{msg.time}</Text>
-                                )}
+                                <View
+                                    style={[
+                                        styles.messageBubble,
+                                        isMe ? styles.bubbleMe : styles.bubbleSender,
+                                    ]}
+                                >
+                                    {msg.text ? (
+                                        <Text style={isMe ? styles.textMe : styles.textSender}>
+                                            {msg.text}
+                                        </Text>
+                                    ) : null}
+                                    {msg.mediaUrl ? (
+                                        <Image
+                                            source={{ uri: msg.mediaUrl }}
+                                            style={styles.messageImage}
+                                        />
+                                    ) : null}
+                                </View>
                             </View>
+                        );
+                    })}
+                </ScrollView>
+
+                {/* Media preview */}
+                {media && (
+                    <View style={styles.mediaPreview}>
+                        <View style={styles.mediaWrapper}>
+                            <Image source={{ uri: media.uri }} style={styles.mediaImage} />
+                            <TouchableOpacity style={styles.removeButton} onPress={removeMedia}>
+                                <MaterialCommunityIcons name="close" size={20} color="#fff" />
+                            </TouchableOpacity>
                         </View>
-                    );
-                })}
-            </ScrollView>
-
-            {media && (
-                <View style={styles.mediaPreview}>
-                    <View style={styles.mediaWrapper}>
-                        <Image source={{ uri: media.uri }} style={styles.mediaImage} />
-                        <TouchableOpacity style={styles.removeButton} onPress={removeMedia}>
-                            <MaterialCommunityIcons name="close" size={20} color="#fff" />
-                        </TouchableOpacity>
                     </View>
-                </View>
-            )}
+                )}
 
-            <View style={styles.containerFooter}>
-                <Input
-                    text={message}
-                    onChangeText={setMessage}
-                    placeholder={'Message'}
-                    secureTextEntry={false}
-                />
-                <TouchableOpacity onPress={pickMedia}>
-                    <MaterialCommunityIcons name='image' size={25} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={sendMessage}>
-                    <MaterialCommunityIcons name='send' size={25} color={colors.primary} />
-                </TouchableOpacity>
-            </View>
-        </SafeAreaView>
+                {/* Input */}
+                <View style={styles.containerFooter}>
+                    <Input
+                        text={message}
+                        onChangeText={setMessage}
+                        placeholder='Message'
+                        secureTextEntry={false}
+                    />
+                    <TouchableOpacity onPress={pickMedia}>
+                        <MaterialCommunityIcons name='image' size={25} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={sendMessage}>
+                        <MaterialCommunityIcons name='send' size={25} color={colors.primary} />
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -141,9 +217,9 @@ const styles = StyleSheet.create({
     containerHeader: {
         width: '100%',
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        gap: 16,
+        gap: 12,
         marginBottom: 10,
     },
     buttonHeaderStyle: {
@@ -190,50 +266,13 @@ const styles = StyleSheet.create({
         marginVertical: 4,
         paddingHorizontal: 10,
     },
-    messageLeft: {
-        justifyContent: 'flex-start',
-    },
-    messageRight: {
-        justifyContent: 'flex-end',
-    },
-    senderProfileImage: {
-        width: 35,
-        height: 35,
-        borderRadius: 18,
-        marginRight: 8,
-    },
-    messageBubble: {
-        maxWidth: '70%',
-        padding: 10,
-        borderRadius: 15,
-    },
-    bubbleMe: {
-        backgroundColor: colors.primary,
-        borderTopRightRadius: 0,
-    },
-    bubbleSender: {
-        backgroundColor: '#e5e5ea',
-        borderTopLeftRadius: 0,
-    },
-    textMe: {
-        color: 'white',
-        fontSize: 16,
-    },
-    textSender: {
-        color: 'black',
-        fontSize: 16,
-    },
-    messageImage: {
-        width: 150,
-        height: 150,
-        borderRadius: 10,
-        marginTop: 5,
-    },
-    timeText: {
-        fontSize: 12,
-        marginTop: 8,
-        alignSelf: 'flex-end',
-        fontWeight: 'bold'
-    },
-
+    messageLeft: { justifyContent: 'flex-start' },
+    messageRight: { justifyContent: 'flex-end' },
+    senderProfileImage: { width: 35, height: 35, borderRadius: 18, marginRight: 8 },
+    messageBubble: { maxWidth: '70%', padding: 10, borderRadius: 15 },
+    bubbleMe: { backgroundColor: colors.primary, borderTopRightRadius: 0 },
+    bubbleSender: { backgroundColor: '#e5e5ea', borderTopLeftRadius: 0 },
+    textMe: { color: 'white', fontSize: 16 },
+    textSender: { color: 'black', fontSize: 16 },
+    messageImage: { width: 150, height: 150, borderRadius: 10, marginTop: 5 },
 });
