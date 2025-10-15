@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return firebaseUser.uid;
         } catch (error: any) {
             console.log("Error signing up:", error.message);
-            return null;
+            throw new Error(error.message);
         }
     };
     const signIn = async (email: string, password: string) => {
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return firebaseUser.uid;
         } catch (error: any) {
             console.log("Error signing in:", error.message);
-            return null;
+            throw new Error(error.message);
         }
     };
     const signOut = async () => {
@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
             return response.data.secure_url;
         } catch (error: any) {
-            console.error("Cloudinary upload error:", error.response?.data || error.message);
+            console.log("Cloudinary upload error:", error.response?.data || error.message);
             throw new Error("Failed to upload image to Cloudinary");
         }
     };
