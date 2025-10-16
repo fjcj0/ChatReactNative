@@ -84,9 +84,10 @@ const Chat = () => {
                 ...doc.data(),
             })) as MessageType[];
             setMessages(msgs);
-            scrollRef.current?.scrollToEnd({ animated: true });
+            setTimeout(() => {
+                scrollRef.current?.scrollToEnd({ animated: true });
+            }, 100);
         });
-
         return () => unsubscribe();
     }, [chatId]);
     const pickMedia = async () => {
